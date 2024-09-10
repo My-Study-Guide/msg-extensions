@@ -16,5 +16,5 @@ chrome.devtools.inspectedWindow.getResources((resources) => {
   let div = document.createElement("div");
   div.innerText = result;
   document.body.appendChild(div);
-  print(result);
+  console.log(result);
 });

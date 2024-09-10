@@ -1,4 +1,10 @@
 module.exports = {
-    mode: 'production',  // 'development', 'production' 또는 'none' 중 하나 선택
+    mode: 'development',  
+    entry: './src/index.js', 
+    devtool: 'source-map',
+    output: {
+      path: __dirname + '/dist',
+      filename: 'main.js',
+    },
     // 기타 설정
   };
