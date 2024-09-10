@@ -1,0 +1,8 @@
+{
+  "name": "msg-extensions",
+  "version": "1.0.0",
+  "main": "index.js",
+  "repository": "https://github.com/My-Study-Guide/msg-extensions.git",
+  "author": "hera <ansaudwls95@naver.com>",
+  "license": "MIT"
+}
