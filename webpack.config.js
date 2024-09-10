@@ -4,7 +4,7 @@ module.exports = {
     devtool: 'source-map',
     output: {
       path: __dirname + '/dist',
-      filename: 'main.js',
+      filename: 'popup.js',
     },
     // 기타 설정
   };
