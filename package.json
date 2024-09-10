@@ -4,5 +4,15 @@
   "main": "index.js",
   "repository": "https://github.com/My-Study-Guide/msg-extensions.git",
   "author": "hera <ansaudwls95@naver.com>",
-  "license": "MIT"
+  "license": "MIT",
+  "scripts": {
+    "dev": "webpack"
+  },
+  "dependencies": {
+    "axios": "^1.7.7"
+  },
+  "devDependencies": {
+    "webpack": "^5.94.0",
+    "webpack-cli": "^5.1.4"
+  }
 }
