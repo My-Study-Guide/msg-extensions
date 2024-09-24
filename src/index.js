@@ -70,7 +70,7 @@ function onAnchorClick(event) {
   return false;
 }
 
-// Function to handle the Analyze button click
+// Function to analyze
 async function analyzeData() {
   // 입력 필드에서 주제 가져오기
   const topicInput = document.getElementById('topic');
@@ -212,10 +212,8 @@ document.addEventListener('DOMContentLoaded', function () {
   analyzeData(); // 팝업 로드 시 자동으로 분석 수행
 
   // Create a div to display the response
-  const buttonDiv = document.getElementById('button_div');
   const responseDiv = document.createElement('div');
   responseDiv.id = 'responseDiv';
-  buttonDiv.appendChild(responseDiv);
 });
 
 // 페이지가 로드될 때, 저장된 텍스트를 불러오기
