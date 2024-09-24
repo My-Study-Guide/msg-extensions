@@ -78,69 +78,173 @@ myChart.data.datasets[0].data.forEach((value, index) => {
 myChart.update();
 
 // Event listener for clicks on links in a browser action popup.
-// Open the link in a new tab of the current window.
 function onAnchorClick(event) {
-    chrome.tabs.create({
-      selected: true,
-      url: event.srcElement.href
-    });
-    return false;
-  }
-  
-  // Given an array of URLs, build a DOM list of those URLs in the browser action popup.
-  function buildPopupDom(divName, data) {
-    let popupDiv = document.getElementById(divName);
-    let ul = document.createElement('ul');
-    popupDiv.appendChild(ul);
-  
-    // 라벨 배열 정의
-    const labels = ['[Current]', '[Recent 1]', '[Recent 2]', '[Recent 3]', '[Recent 4]'];
-  
-    for (let i = 0; i < data.length; i++) {
-      let a = document.createElement('a');
-      a.href = data[i];
-      a.appendChild(document.createTextNode(data[i])); // URL만 추가
-      a.addEventListener('click', onAnchorClick);
-  
-      let li = document.createElement('li');
-      
-      // 라벨을 클릭할 수 없도록 span 요소로 추가
-      let labelSpan = document.createElement('span');
-      labelSpan.textContent = `${labels[i]} `; // 라벨 추가
-      labelSpan.style.cursor = 'default'; // 커서를 기본으로 설정하여 클릭할 수 없음을 나타냄
-      li.appendChild(labelSpan); // 라벨 추가
-      li.appendChild(a); // URL 추가
-  
-      ul.appendChild(li);
-    }
-  }
-  
-  // Search history to find up to five links that a user has visited in the last week,
-  // and show those links in a popup.
-  function buildTypedUrlList(divName) {
-    // To look for history items visited in the last week,
-    // subtract a week of milliseconds from the current time.
-    let millisecondsPerWeek = 1000 * 60 * 60 * 24 * 7;
-    let oneWeekAgo = new Date().getTime() - millisecondsPerWeek;
-  
-    // Search for all history items from the past week.
+  chrome.tabs.create({
+    selected: true,
+    url: event.srcElement.href
+  });
+  return false;
+}
+
+// Function to handle the Analyze button click
+async function analyzeData() {
+  // 입력 필드에서 주제 가져오기
+  const topicInput = document.getElementById('topic');
+  const topic = topicInput.value;
+
+  // 최근 방문한 URL 목록을 가져오기
+  const recentUrls = [];
+  const historyItems = await new Promise((resolve) => {
     chrome.history.search(
       {
-        text: '', // Return every history item
-        startTime: oneWeekAgo // that was accessed less than one week ago
+        text: '',
+        startTime: Date.now() - 1000 * 60 * 60 * 24 * 7 // 지난 1주일
       },
-      function (historyItems) {
-        // Extract URLs from the historyItems and limit the list to 5 items.
-        let recentUrls = historyItems.slice(0, 5).map(item => item.url);
-  
-        // Pass the list of URLs to the function that builds the popup DOM.
-        buildPopupDom(divName, recentUrls);
-      }
+      resolve
     );
-  }
-  
-  // This function is triggered when the popup is loaded.
-  document.addEventListener('DOMContentLoaded', function () {
-    buildTypedUrlList('typedUrl_div');
   });
-  
+
+  // URL을 recentUrls 배열에 추가 (최대 5개)
+  for (let i = 0; i < Math.min(5, historyItems.length); i++) {
+    recentUrls.push(historyItems[i].url);
+  }
+
+  // POST 요청에 사용할 body 구성
+  const requestBody = {
+    topic: topic,
+    urls: recentUrls
+  };
+
+  try {
+    const response = await fetch('http://msg.hyezzang.com:7070/analyze/', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(requestBody)
+    });
+
+    if (!response.ok) {
+      throw new Error('Network response was not ok');
+    }
+
+    const responseData = await response.json(); // 응답을 JSON으로 변환
+    console.log('Success:', responseData); // 성공적으로 받은 데이터 처리
+
+    // 응답 데이터를 HTML에 출력
+    displayResponse(responseData);
+
+  } catch (error) {
+    console.error('Error:', error); // 에러 처리
+  }
+}
+
+// Function to display the response data in the HTML
+function displayResponse(data) {
+  const responseDiv = document.getElementById('responseDiv');
+  responseDiv.innerHTML = ''; // 기존 내용 삭제
+
+  // 응답 데이터를 HTML에 추가
+  if (Array.isArray(data)) {
+    // 데이터가 배열일 경우
+    data.forEach(item => {
+      const p = document.createElement('p');
+      p.textContent = item; // 응답 내용을 텍스트로 추가
+      responseDiv.appendChild(p); // div에 추가
+    });
+  } else if (typeof data === 'object') {
+    // 데이터가 객체일 경우
+    const p = document.createElement('p');
+    p.textContent = JSON.stringify(data, null, 2); // JSON 형식으로 추가 (들여쓰기 포함)
+    responseDiv.appendChild(p); // div에 추가
+  } else if (typeof data === 'string') {
+    // 데이터가 문자열일 경우
+    const p = document.createElement('p');
+    p.textContent = data; // 문자열 내용을 텍스트로 추가
+    responseDiv.appendChild(p); // div에 추가
+  } else {
+    // 데이터가 다른 형식일 경우
+    const p = document.createElement('p');
+    p.textContent = 'Unexpected data format: ' + data; // 예외 처리
+    responseDiv.appendChild(p); // div에 추가
+  }
+}
+
+// Given an array of URLs, build a DOM list of those URLs in the browser action popup.
+function buildPopupDom(divName, data) {
+  let popupDiv = document.getElementById(divName);
+  let ul = document.createElement('ul');
+  popupDiv.appendChild(ul);
+
+  // 라벨 배열 정의
+  const labels = ['[Current]', '[Recent 1]', '[Recent 2]', '[Recent 3]', '[Recent 4]'];
+
+  for (let i = 0; i < data.length; i++) {
+    let a = document.createElement('a');
+    a.href = data[i];
+    a.appendChild(document.createTextNode(data[i])); // URL만 추가
+    a.addEventListener('click', onAnchorClick);
+
+    let li = document.createElement('li');
+    
+    // 라벨을 클릭할 수 없도록 span 요소로 추가
+    let labelSpan = document.createElement('span');
+    labelSpan.textContent = `${labels[i]} `; // 라벨 추가
+    labelSpan.style.cursor = 'default'; // 커서를 기본으로 설정하여 클릭할 수 없음을 나타냄
+    li.appendChild(labelSpan); // 라벨 추가
+    li.appendChild(a); // URL 추가
+
+    ul.appendChild(li);
+  }
+}
+
+// Search history to find up to five links that a user has visited in the last week,
+// and show those links in a popup.
+function buildTypedUrlList(divName) {
+  // To look for history items visited in the last week,
+  // subtract a week of milliseconds from the current time.
+  let millisecondsPerWeek = 1000 * 60 * 60 * 24 * 7;
+  let oneWeekAgo = new Date().getTime() - millisecondsPerWeek;
+
+  // Search for all history items from the past week.
+  chrome.history.search(
+    {
+      text: '', // Return every history item
+      startTime: oneWeekAgo // that was accessed less than one week ago
+    },
+    function (historyItems) {
+      // Extract URLs from the historyItems and limit the list to 5 items.
+      let recentUrls = historyItems.slice(0, 5).map(item => item.url);
+
+      // Pass the list of URLs to the function that builds the popup DOM.
+      buildPopupDom(divName, recentUrls);
+    }
+  );
+}
+
+// This function is triggered when the popup is loaded.
+document.addEventListener('DOMContentLoaded', function () {
+  buildTypedUrlList('typedUrl_div');
+
+  // 버튼 클릭 시 분석 함수 호출
+  analyzeData(); // 팝업 로드 시 자동으로 분석 수행
+
+  // Create a div to display the response
+  const buttonDiv = document.getElementById('button_div');
+  const responseDiv = document.createElement('div');
+  responseDiv.id = 'responseDiv';
+  buttonDiv.appendChild(responseDiv);
+});
+
+// 페이지가 로드될 때, 저장된 텍스트를 불러오기
+document.addEventListener('DOMContentLoaded', () => {
+  const topicInput = document.getElementById('topic');
+  const savedTopic = localStorage.getItem('studyTopic');
+  if (savedTopic) {
+    topicInput.value = savedTopic;
+  }
+
+  topicInput.addEventListener('input', () => {
+    localStorage.setItem('studyTopic', topicInput.value);
+  });
+});

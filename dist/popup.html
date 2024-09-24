@@ -4,7 +4,7 @@
     <title>Check your Concentration!</title>
     <style>
       body {
-        min-width: 250px;
+        min-width: 600px;
       }
       .icon {
         width: 20px;
@@ -19,6 +19,7 @@
 
   <body>
     <h2>Check your Concentration!</h2>
+    <input type="text" id="topic" placeholder="Input your Topic for Study!" />
     <div id="concentration_level">
       <img src="../images/good.png" class="icon" alt="Good">
       <img src="../images/warning.png" class="icon" alt="Warning">
@@ -27,5 +28,6 @@
     <canvas id="concentration_chart" class="chart"></canvas>
     <script src="popup.js"></script>
     <div id="typedUrl_div"></div>
+    <div id="responseDiv"></div>
   </body>
 </html>
