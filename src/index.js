@@ -1,3 +1,27 @@
+import Chart from 'chart.js/auto';
+
+// 차트를 생성하는 코드
+const ctx = document.getElementById('concentration_chart').getContext('2d');
+const myChart = new Chart(ctx, {
+  type: 'line',
+  data: {
+    labels: ['12:00', '12:30', '1:00'],
+    datasets: [{
+      label: 'Concentration',
+      data: [60, 75, 85],
+      borderColor: 'rgba(75, 192, 192, 1)',
+      borderWidth: 1
+    }]
+  },
+  options: {
+    scales: {
+      y: {
+        beginAtZero: true
+      }
+    }
+  }
+});
+
 // Event listener for clicks on links in a browser action popup.
 // Open the link in a new tab of the current window.
 function onAnchorClick(event) {
