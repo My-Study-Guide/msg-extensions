@@ -70,13 +70,20 @@ function onAnchorClick(event) {
   return false;
 }
 
-// Function to analyze
+// Event listener for topic setting button click
+const topicButton = document.getElementById('topic_button');
+topicButton.addEventListener('click', analyzeData);
+
+// Event listener for page load
+window.addEventListener('load', analyzeData);
+
+// Function to analyze (updated)
 async function analyzeData() {
   // 입력 필드에서 주제 가져오기
   const topicInput = document.getElementById('topic');
   const topic = topicInput.value;
 
-  // 최근 방문한 URL 목록을 가져오기
+  // 최근 방문한 URL 목록을 가져오기 (이전과 동일)
   const recentUrls = [];
   const historyItems = await new Promise((resolve) => {
     chrome.history.search(
@@ -88,12 +95,11 @@ async function analyzeData() {
     );
   });
 
-  // URL을 recentUrls 배열에 추가 (최대 5개)
   for (let i = 0; i < Math.min(5, historyItems.length); i++) {
     recentUrls.push(historyItems[i].url);
   }
 
-  // POST 요청에 사용할 body 구성
+  // POST 요청에 사용할 body 구성 (이전과 동일)
   const requestBody = {
     topic: topic,
     urls: recentUrls
@@ -115,7 +121,7 @@ async function analyzeData() {
     const responseData = await response.json(); // 응답을 JSON으로 변환
     console.log('Success:', responseData); // 성공적으로 받은 데이터 처리
 
-    // 응답 데이터를 HTML에 출력 및 차트 업데이트
+    // 응답 데이터를 HTML에 출력 및 차트 업데이트 (이전과 동일)
     displayResponse(responseData);
 
   } catch (error) {
@@ -207,9 +213,6 @@ function buildTypedUrlList(divName) {
 // This function is triggered when the popup is loaded.
 document.addEventListener('DOMContentLoaded', function () {
   buildTypedUrlList('typedUrl_div');
-
-  // 버튼 클릭 시 분석 함수 호출
-  analyzeData(); // 팝업 로드 시 자동으로 분석 수행
 
   // Create a div to display the response
   const responseDiv = document.createElement('div');
