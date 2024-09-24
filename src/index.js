@@ -22,8 +22,7 @@ const myChart = new Chart(ctx, {
       data: [60, 75, 85, 50, 35],
       borderColor: 'rgba(75, 192, 192, 1)',
       borderWidth: 1,
-      pointStyle: [], // 각 점의 스타일을 정의할 배열
-      pointRadius: 10 // 점의 기본 크기
+      pointRadius: 0 // 기본 점 숨김
     }]
   },
   options: {
@@ -31,21 +30,17 @@ const myChart = new Chart(ctx, {
       y: {
         beginAtZero: true
       }
-    },
-    elements: {
-      point: {
-        radius: 0 // 기본 점은 숨김
-      }
     }
   },
   plugins: [{
     beforeDraw: (chart) => {
       const ctx = chart.ctx;
       const dataset = chart.data.datasets[0];
-      
+      const meta = chart.getDatasetMeta(0);
+
       dataset.data.forEach((value, index) => {
-        const x = chart.scales.x.getPixelForValue(index);
-        const y = chart.scales.y.getPixelForValue(value);
+        const x = meta.data[index].x;
+        const y = meta.data[index].y;
 
         let image;
         if (value >= 70) {
@@ -61,17 +56,6 @@ const myChart = new Chart(ctx, {
       });
     }
   }]
-});
-
-// 각 데이터 포인트에 대해 이미지를 설정
-myChart.data.datasets[0].data.forEach((value, index) => {
-  if (value >= 70) {
-    myChart.data.datasets[0].pointStyle[index] = goodImage; // good 이미지
-  } else if (value >= 40) {
-    myChart.data.datasets[0].pointStyle[index] = warningImage; // warning 이미지
-  } else {
-    myChart.data.datasets[0].pointStyle[index] = dangerImage; // danger 이미지
-  }
 });
 
 // 차트를 업데이트
@@ -158,7 +142,7 @@ function displayResponse(data) {
     // 응답 데이터를 HTML에 추가
     results.forEach(item => {
       const p = document.createElement('p');
-      p.textContent = `URL: ${item.url}, Score: ${item.score}, Summary: ${item.summary}`; 
+      p.textContent = `URL: ${item.url}, Score: ${parseInt(item.score*100)}, Summary: ${item.summary}`; 
       responseDiv.appendChild(p); // div에 추가
     });
   } else {
