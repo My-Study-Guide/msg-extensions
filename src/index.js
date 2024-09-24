@@ -131,7 +131,7 @@ async function analyzeData() {
     const responseData = await response.json(); // 응답을 JSON으로 변환
     console.log('Success:', responseData); // 성공적으로 받은 데이터 처리
 
-    // 응답 데이터를 HTML에 출력
+    // 응답 데이터를 HTML에 출력 및 차트 업데이트
     displayResponse(responseData);
 
   } catch (error) {
@@ -139,33 +139,31 @@ async function analyzeData() {
   }
 }
 
-// Function to display the response data in the HTML
+// Function to display the response data in the HTML and update the chart
 function displayResponse(data) {
   const responseDiv = document.getElementById('responseDiv');
   responseDiv.innerHTML = ''; // 기존 내용 삭제
 
-  // 응답 데이터를 HTML에 추가
-  if (Array.isArray(data)) {
-    // 데이터가 배열일 경우
-    data.forEach(item => {
+  // 응답 데이터가 올바른지 확인 후 처리
+  if (data && data.data && data.data.results) {
+    const results = data.data.results;
+
+    // scores 배열로 score 값 추출
+    const scores = results.map(result => result.score * 100); // 0.XX 값을 퍼센트로 변환
+
+    // 차트의 데이터 업데이트
+    myChart.data.datasets[0].data = scores.reverse(); // scores 배열로 업데이트
+    myChart.update(); // 차트 업데이트
+
+    // 응답 데이터를 HTML에 추가
+    results.forEach(item => {
       const p = document.createElement('p');
-      p.textContent = item; // 응답 내용을 텍스트로 추가
+      p.textContent = `URL: ${item.url}, Score: ${item.score}, Summary: ${item.summary}`; 
       responseDiv.appendChild(p); // div에 추가
     });
-  } else if (typeof data === 'object') {
-    // 데이터가 객체일 경우
-    const p = document.createElement('p');
-    p.textContent = JSON.stringify(data, null, 2); // JSON 형식으로 추가 (들여쓰기 포함)
-    responseDiv.appendChild(p); // div에 추가
-  } else if (typeof data === 'string') {
-    // 데이터가 문자열일 경우
-    const p = document.createElement('p');
-    p.textContent = data; // 문자열 내용을 텍스트로 추가
-    responseDiv.appendChild(p); // div에 추가
   } else {
-    // 데이터가 다른 형식일 경우
     const p = document.createElement('p');
-    p.textContent = 'Unexpected data format: ' + data; // 예외 처리
+    p.textContent = 'Unexpected data format'; // 예외 처리
     responseDiv.appendChild(p); // div에 추가
   }
 }
@@ -189,7 +187,7 @@ function buildPopupDom(divName, data) {
     
     // 라벨을 클릭할 수 없도록 span 요소로 추가
     let labelSpan = document.createElement('span');
-    labelSpan.textContent = `${labels[i]} `; // 라벨 추가
+    labelSpan.textContent = `${labels[i]}`; // 라벨 추가
     labelSpan.style.cursor = 'default'; // 커서를 기본으로 설정하여 클릭할 수 없음을 나타냄
     li.appendChild(labelSpan); // 라벨 추가
     li.appendChild(a); // URL 추가
