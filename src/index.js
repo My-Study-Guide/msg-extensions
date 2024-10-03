@@ -26,8 +26,10 @@ const imagesLoaded = Promise.all([
   new Promise((resolve) => { dangerImage.onload = resolve; })
 ]);
 
+let myChart;
+
 imagesLoaded.then(() => {
-  const myChart = new Chart(ctx, {
+  myChart = new Chart(ctx, {
     type: 'line',
     data: {
       labels: ['Recent 4', 'Recent 3', 'Recent 2', 'Recent 1', 'Current'],
