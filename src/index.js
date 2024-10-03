@@ -1,5 +1,11 @@
 import Chart from 'chart.js/auto';
 
+// 로컬 스토리지에서 저장된 데이터 가져오기
+let savedData = localStorage.getItem('chartData');
+
+// 만약 저장된 데이터가 있으면 JSON으로 변환하고, 없으면 기본 샘플 데이터를 사용
+let chartData = savedData ? JSON.parse(savedData) : [60, 75, 85, 50, 35];
+
 // 차트를 생성하는 코드
 const ctx = document.getElementById('concentration_chart').getContext('2d');
 
@@ -19,7 +25,7 @@ const myChart = new Chart(ctx, {
     labels: ['Recent 4', 'Recent 3', 'Recent 2', 'Recent 1', 'Current'],
     datasets: [{
       label: 'Concentration',
-      data: [60, 75, 85, 50, 35],
+      data: chartData,
       borderColor: 'rgba(75, 192, 192, 1)',
       borderWidth: 1,
       pointRadius: 0 // 기본 점 숨김
@@ -71,19 +77,14 @@ function onAnchorClick(event) {
 }
 
 // Event listener for topic setting button click
-const topicButton = document.getElementById('topic_button');
-topicButton.addEventListener('click', analyzeData);
+const analyzeButton = document.getElementById('analyze_button');
+analyzeButton.addEventListener('click', analyzeData);
 
-// Event listener for page load
-window.addEventListener('load', analyzeData);
-
-// Function to analyze (updated)
+// Function to analyze data
 async function analyzeData() {
-  // 입력 필드에서 주제 가져오기
   const topicInput = document.getElementById('topic');
   const topic = topicInput.value;
 
-  // 최근 방문한 URL 목록을 가져오기 (이전과 동일)
   const recentUrls = [];
   const historyItems = await new Promise((resolve) => {
     chrome.history.search(
@@ -99,7 +100,6 @@ async function analyzeData() {
     recentUrls.push(historyItems[i].url);
   }
 
-  // POST 요청에 사용할 body 구성 (이전과 동일)
   const requestBody = {
     topic: topic,
     urls: recentUrls
@@ -118,15 +118,31 @@ async function analyzeData() {
       throw new Error('Network response was not ok');
     }
 
-    const responseData = await response.json(); // 응답을 JSON으로 변환
-    console.log('Success:', responseData); // 성공적으로 받은 데이터 처리
+    const responseData = await response.json(); 
+    console.log('Success:', responseData);
 
-    // 응답 데이터를 HTML에 출력 및 차트 업데이트 (이전과 동일)
+    // 응답 데이터를 차트와 HTML에 출력
     displayResponse(responseData);
 
+    // 받은 차트 데이터를 로컬 스토리지에 저장
+    saveChartData(responseData.data.results.map(result => result.score * 100)); 
+
+    // 응답 데이터를 로컬 스토리지에 저장
+    saveResponseData(responseData);
+
   } catch (error) {
-    console.error('Error:', error); // 에러 처리
+    console.error('Error:', error);
   }
+}
+
+// Function to save chart data to localStorage
+function saveChartData(data) {
+  localStorage.setItem('chartData', JSON.stringify(data));
+}
+
+// Function to save response data to localStorage
+function saveResponseData(data) {
+  localStorage.setItem('responseData', JSON.stringify(data));
 }
 
 // Function to display the response data in the HTML and update the chart
@@ -134,77 +150,64 @@ function displayResponse(data) {
   const responseDiv = document.getElementById('responseDiv');
   responseDiv.innerHTML = ''; // 기존 내용 삭제
 
-  // 응답 데이터가 올바른지 확인 후 처리
   if (data && data.data && data.data.results) {
     const results = data.data.results;
+    const scores = results.map(result => result.score * 100); 
 
-    // scores 배열로 score 값 추출
-    const scores = results.map(result => result.score * 100); // 0.XX 값을 퍼센트로 변환
+    // 차트 데이터 업데이트
+    myChart.data.datasets[0].data = scores.reverse();
+    myChart.update(); 
 
-    // 차트의 데이터 업데이트
-    myChart.data.datasets[0].data = scores.reverse(); // scores 배열로 업데이트
-    myChart.update(); // 차트 업데이트
-
-    // 응답 데이터를 HTML에 추가
     results.forEach(item => {
       const p = document.createElement('p');
-      p.textContent = `URL: ${item.url}, Score: ${parseInt(item.score*100)}, Summary: ${item.summary}`; 
-      responseDiv.appendChild(p); // div에 추가
+      p.textContent = `URL: ${item.url}, Score: ${parseInt(item.score * 100)}, Summary: ${item.summary}`;
+      responseDiv.appendChild(p);
     });
   } else {
     const p = document.createElement('p');
-    p.textContent = 'Unexpected data format'; // 예외 처리
-    responseDiv.appendChild(p); // div에 추가
+    p.textContent = 'Unexpected data format';
+    responseDiv.appendChild(p);
   }
 }
 
-// Given an array of URLs, build a DOM list of those URLs in the browser action popup.
+// Build a DOM list of visited URLs in the last week
 function buildPopupDom(divName, data) {
   let popupDiv = document.getElementById(divName);
   let ul = document.createElement('ul');
   popupDiv.appendChild(ul);
 
-  // 라벨 배열 정의
   const labels = ['[Current]', '[Recent 1]', '[Recent 2]', '[Recent 3]', '[Recent 4]'];
 
   for (let i = 0; i < data.length; i++) {
     let a = document.createElement('a');
     a.href = data[i];
-    a.appendChild(document.createTextNode(data[i])); // URL만 추가
+    a.appendChild(document.createTextNode(data[i]));
     a.addEventListener('click', onAnchorClick);
 
     let li = document.createElement('li');
-    
-    // 라벨을 클릭할 수 없도록 span 요소로 추가
+
     let labelSpan = document.createElement('span');
-    labelSpan.textContent = `${labels[i]}`; // 라벨 추가
-    labelSpan.style.cursor = 'default'; // 커서를 기본으로 설정하여 클릭할 수 없음을 나타냄
-    li.appendChild(labelSpan); // 라벨 추가
-    li.appendChild(a); // URL 추가
+    labelSpan.textContent = `${labels[i]}`;
+    labelSpan.style.cursor = 'default';
+    li.appendChild(labelSpan);
+    li.appendChild(a);
 
     ul.appendChild(li);
   }
 }
 
-// Search history to find up to five links that a user has visited in the last week,
-// and show those links in a popup.
+// Search history to show up to five visited links
 function buildTypedUrlList(divName) {
-  // To look for history items visited in the last week,
-  // subtract a week of milliseconds from the current time.
   let millisecondsPerWeek = 1000 * 60 * 60 * 24 * 7;
   let oneWeekAgo = new Date().getTime() - millisecondsPerWeek;
 
-  // Search for all history items from the past week.
   chrome.history.search(
     {
-      text: '', // Return every history item
-      startTime: oneWeekAgo // that was accessed less than one week ago
+      text: '',
+      startTime: oneWeekAgo
     },
     function (historyItems) {
-      // Extract URLs from the historyItems and limit the list to 5 items.
       let recentUrls = historyItems.slice(0, 5).map(item => item.url);
-
-      // Pass the list of URLs to the function that builds the popup DOM.
       buildPopupDom(divName, recentUrls);
     }
   );
@@ -214,12 +217,18 @@ function buildTypedUrlList(divName) {
 document.addEventListener('DOMContentLoaded', function () {
   buildTypedUrlList('typedUrl_div');
 
-  // Create a div to display the response
   const responseDiv = document.createElement('div');
   responseDiv.id = 'responseDiv';
+
+  // 페이지가 로드될 때 로컬 스토리지에서 저장된 응답 데이터를 불러와 출력
+  const savedResponseData = localStorage.getItem('responseData');
+  if (savedResponseData) {
+    const parsedResponseData = JSON.parse(savedResponseData);
+    displayResponse(parsedResponseData);
+  }
 });
 
-// 페이지가 로드될 때, 저장된 텍스트를 불러오기
+// 페이지가 로드될 때 저장된 주제를 불러오기
 document.addEventListener('DOMContentLoaded', () => {
   const topicInput = document.getElementById('topic');
   const savedTopic = localStorage.getItem('studyTopic');
