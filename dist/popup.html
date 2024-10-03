@@ -1,17 +1,36 @@
 <!doctype html>
 <html>
   <head>
-    <title>Recently Typed URLs</title>
+    <title>Check your Concentration!</title>
     <style>
       body {
-        min-width: 250px;
+        min-width: 600px;
+      }
+      .icon {
+        width: 20px;
+        height: 20px;
+      }
+      .chart {
+        width: 100%;
+        height: 200px;
       }
     </style>
   </head>
 
   <body>
-    <h2>Recently Typed URLs:</h2>
+    <h2>Check your Concentration!</h2>
+    <div style="display: flex; align-items: center;">
+      <input type="text" id="topic" placeholder="Input your Topic for Study!" />
+      <button id="analyze_button">Check your concentration!</button>
+    </div>
+    <div id="concentration_level">
+      <img src="../images/good.png" class="icon" alt="Good">
+      <img src="../images/warning.png" class="icon" alt="Warning">
+      <img src="../images/danger.png" class="icon" alt="Danger">
+    </div>
+    <canvas id="concentration_chart" class="chart"></canvas>
     <script src="popup.js"></script>
     <div id="typedUrl_div"></div>
+    <div id="responseDiv"></div>
   </body>
 </html>

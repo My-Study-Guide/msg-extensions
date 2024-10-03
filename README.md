@@ -4,6 +4,8 @@
 
 ## 2️⃣ How can execute? 
 - yarn install 
+- npm install chart.js --save
+- npm install --save-dev babel-loader @babel/core @babel/preset-env
 - yarn dev (for webpack bundling)
 - test: chrome://extensions/
 

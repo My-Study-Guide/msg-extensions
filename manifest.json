@@ -9,13 +9,13 @@
         "default_popup": "dist/popup.html",
         "default_icon": "images/icon.png"
     },
-    "content_scripts": [
+    "manifest_version": 3,
+    "web_accessible_resources": [
         {
-        "matches": ["<all_urls>"],
-        "js": ["content.js"]
+            "resources": ["images/*"],
+            "matches": ["<all_urls>"]
         }
-    ],
-    "manifest_version": 3
+    ]
 }
   
 
